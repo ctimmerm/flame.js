@@ -226,7 +226,7 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
             buffer = buffer.push('<div class="table-corner" style="top: %@px; left: 0px; height: %@px; width: %@px;"></div>'.fmt(topOffset, columnHeaderHeight, leftOffset));
             // Column headers
             buffer = this._renderHeader(buffer, 'column', leftOffset, defaultColumnWidth);
-            topOffset += columnHeaderHeight;
+            topOffset += didRenderTitle ? columnHeaderHeight - 4 : columnHeaderHeight;
         }
         if (renderRowHeader) {
             // Row headers
@@ -356,4 +356,3 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
         return buffer;
     }
 });
-
