@@ -61,6 +61,63 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
             }
         },
 
+        keyDown: function(event, view) {
+            var owner = this.get('owner');
+            var selectedDataCell = owner.get('selectedDataCell');
+            if ((event.ctrlKey || event.metaKey) && !Ember.isNone(selectedDataCell)) {
+                var value = selectedDataCell.editableValue();
+                var $container = owner.$('.clipboard-container');
+                $container.empty().show();
+                var $textarea = $('<textarea></textarea>')
+                    .val(value)
+                    .appendTo($container)
+                    .focus()
+                    .select();
+                if (selectedDataCell.isEditable()) {
+                    $textarea.on('paste', function (e) {
+                        var pastedValue = e.originalEvent.clipboardData.getData('Text');
+                        if (!owner._validateAndSet(pastedValue)) {
+                            Rui.AlertPanel.error({
+                                title: _('Invalid value'),
+                                message: _("Invalid value for cell: '%@'").fmt(pastedValue),
+                                isCancelVisible: false
+                            }).popup();
+                        }
+                    });
+                }
+                // Make sure that control/command + <other key> combinations will still be handled by the browser
+                return false;
+            }
+
+            return !owner._handleKeyEvent('keyDown', event, view);
+        },
+
+        keyUp: function(event) {
+            if ($(event.target).is('.clipboard-container textarea')) {
+                var $container = this.get('owner').$('.clipboard-container');
+                $container.empty().hide();
+                return true;
+            }
+            return false;
+        },
+
+        // We need to use the keyPress event, as some browsers don't report the character pressed correctly with keyDown
+        keyPress: function(event) {
+            var dataCell = this.get('owner.selectedDataCell');
+            if (Ember.isNone(dataCell) || (dataCell && !dataCell.isEditable())) {
+                return false;
+            }
+            var key = String.fromCharCode(event.which);
+            if (event.metaKey) { return false; }
+            if (/[a-zA-Z0-9+*\-\[\/\=]/.test(key)) {
+                var owner = this.get('owner');
+                owner.set('editValue', key);
+                this.startEdit();
+                return true;
+            }
+            return false;
+        },
+
         insertNewline: function(event) {
             return this.startEdit();
         },
@@ -140,25 +197,12 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
             return true;
         },
 
-        // We need to use the keyPress event, as some browsers don't report the character pressed correctly with keyDown
-        keyPress: function(event) {
-            var dataCell = this.get('owner.selectedDataCell');
-            if (Ember.isNone(dataCell) || (dataCell && !dataCell.isEditable())) {
-                return false;
-            }
-            var key = String.fromCharCode(event.which);
-            if (event.metaKey) { return false; }
-            if (key.match(/[a-zA-Z0-9+*\-\[\/\=]/)) {
-                var owner = this.get('owner');
-                owner.set('editValue', key);
-                this.startEdit();
-                return true;
-            }
-            return false;
-        },
-
         enterState: function() {
             this.get('owner.selection').show();
+        },
+
+        exitState: function() {
+            this.get('owner').$('.clipboard-container').empty().hide();
         }
     }),
 
@@ -370,7 +414,7 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
     // Get the Cell instance that corresponds to the selected cell in the view
     selectedDataCell: function() {
         var selectedCell = this.get('selectedCell');
-        return this.get('data')[selectedCell.parent().attr('data-index')][selectedCell.attr('data-index')];
+        return this.get('data')[parseInt(selectedCell.parent().attr('data-index'), 10)][parseInt(selectedCell.attr('data-index'), 10)];
     }.property().volatile(),
 
     editableValue: function(dataCell, readOnly) {
@@ -432,7 +476,11 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
 
     _confirmEdit: function() {
         var newValue = this.get('editField').val();
-        return this._validateAndSet(newValue);
+        if (!this._validateAndSet(newValue)) {
+            this.get('editField').addClass('invalid');
+            return false;
+        }
+        return true;
     },
 
     // Returns true if cell valid, or false otherwise
@@ -459,7 +507,6 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
 
             return true;
         } else {
-            this.get('editField').addClass('invalid');
             return false;
         }
     },
@@ -561,6 +608,9 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
 
         // Edit field (text)
         buffer.push('<input type="text" class="table-edit-field">');
+
+        // Container that will hold the textarea used for copy/pasting cells
+        buffer.push('<div class="clipboard-container"></div>');
     },
 
     // Update dirty cells
