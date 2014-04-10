@@ -64,9 +64,12 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
         keyDown: function(event, view) {
             var owner = this.get('owner');
             var selectedDataCell = owner.get('selectedDataCell');
-            if ((event.ctrlKey || event.metaKey) && !Ember.isNone(selectedDataCell)) {
+            if ((event.ctrlKey || event.metaKey) && !Ember.isNone(selectedDataCell) && selectedDataCell.isCopyable()) {
                 var value = selectedDataCell.editableValue();
+                var position = owner.get('selectedCell').position();
+                var scrollable = owner.get('parentView.scrollable');
                 var $container = owner.$('.clipboard-container');
+                $container.css({ left: position.left + scrollable.scrollLeft(), top: position.top + scrollable.scrollTop() });
                 $container.empty().show();
                 var $textarea = $('<textarea></textarea>')
                     .val(value)
@@ -76,13 +79,19 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
                 if (selectedDataCell.isEditable()) {
                     $textarea.on('paste', function (e) {
                         var pastedValue = e.originalEvent.clipboardData.getData('Text');
-                        if (!owner._validateAndSet(pastedValue)) {
-                            Rui.AlertPanel.error({
-                                title: _('Invalid value'),
-                                message: _("Invalid value for cell: '%@'").fmt(pastedValue),
-                                isCancelVisible: false
-                            }).popup();
+                        var pasteFailed = function() {
+                            var tableViewDelegate = owner.get('tableViewDelegate');
+                            if (tableViewDelegate && tableViewDelegate.pasteDidFail) tableViewDelegate.pasteDidFail(pastedValue);
+                        };
+                        if (selectedDataCell.options()) {
+                            var option = selectedDataCell.options().findBy('title', pastedValue);
+                            if (!option) {
+                                pasteFailed();
+                                return false;
+                            }
+                            pastedValue = option.value;
                         }
+                        if (!owner._validateAndSet(pastedValue)) pasteFailed();
                     });
                 }
                 // Make sure that control/command + <other key> combinations will still be handled by the browser
@@ -104,7 +113,7 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
         // We need to use the keyPress event, as some browsers don't report the character pressed correctly with keyDown
         keyPress: function(event) {
             var dataCell = this.get('owner.selectedDataCell');
-            if (Ember.isNone(dataCell) || (dataCell && !dataCell.isEditable())) {
+            if (Ember.isNone(dataCell) || !dataCell.isEditable()) {
                 return false;
             }
             var key = String.fromCharCode(event.which);
@@ -202,7 +211,8 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
         },
 
         exitState: function() {
-            this.get('owner').$('.clipboard-container').empty().hide();
+            var clipboardContainer = this.get('owner').$('.clipboard-container');
+            if (clipboardContainer) clipboardContainer.empty().hide();
         }
     }),
 
