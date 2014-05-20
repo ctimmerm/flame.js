@@ -530,8 +530,10 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
     },
 
     willLoseKeyResponder: function() {
-        this.set('selectedCell', null);
-        this.set('selectionEnd', null);
+        this.setProperties({
+            selectedCell: null,
+            selectionEnd: null
+        });
         this.gotoFlameState('loaded');
     },
 
@@ -565,6 +567,10 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
     },
 
     _selectionDidChange: function() {
+        Ember.run.once(this, this._updateSelection);
+    }.observes('selectedCell', 'selectionEnd'),
+
+    _updateSelection: function() {
         var selectedCell = this.get('selectedCell');
         if (!selectedCell) {
             return;
@@ -576,7 +582,7 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
         var scrollTop = scrollable.scrollTop();
         var scrollLeft = scrollable.scrollLeft();
 
-        selection.css(this._selectionCSS(this.get('selectedCell'), this.get('selectionEnd'), scrollTop, scrollLeft));
+        selection.css(this._selectionCSS(this.get('selectedCell'), this.get('selectionEnd'), scrollTop, scrollLeft, position));
 
         // Ensure the selection is within the visible area of the scrollview
         if (position.top < 0) {
@@ -591,13 +597,13 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
             scrollable.scrollLeft(left + scrollLeft + 17);
         }
         selectedCell.addClass('active-cell');
-    }.observes('selectedCell', 'selectionEnd'),
+    },
 
-    _selectionCSS: function(startCell, endCell, scrollTop, scrollLeft) {
+    _selectionCSS: function(startCell, endCell, scrollTop, scrollLeft, position) {
         var offset = jQuery.browser.webkit ? 0 : 1;
         endCell = endCell || startCell;
-        var startPosition = startCell.position();
-        var endPosition = endCell.position();
+        var startPosition = position;
+        var endPosition = startCell === endCell ? position : endCell.position();
 
         var minLeft = Math.min(startPosition.left, endPosition.left);
         var minTop = Math.min(startPosition.top, endPosition.top);
@@ -673,8 +679,10 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
 
     selectCell: function(newSelection) {
         if (this.get('parentView.allowSelection') && this.isCellSelectable(newSelection)) {
-            this.set('selectedCell', newSelection);
-            this.set('selectionEnd', newSelection);
+            this.setProperties({
+                selectedCell: newSelection,
+                selectionEnd: newSelection
+            });
             return true;
         }
         return false;
