@@ -70,7 +70,7 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
         },
 
         paste: function(value) {
-            value = value.replace(/\r/g, '');
+            value = value.replace(/\r\n|\r/g, '\n').trim();
             var owner = this.get('owner');
             var data = owner.get('data');
             var selectedCell = this.get('owner.selectedCell');
@@ -81,6 +81,16 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
                 var tableViewDelegate = owner.get('tableViewDelegate');
                 if (tableViewDelegate && tableViewDelegate.pasteDidFail) tableViewDelegate.pasteDidFail(pastedValue);
             };
+
+            // If only one value is in the clipboard and a range is selected,
+            // copy that value to all selected cells.
+            if (!/\n|\t/.test(value) && selectedCell !== this.get('owner.selectionEnd')) {
+                this._forEachSelectedCell(function(i, j) {
+                    var dataCell = owner.$('tr[data-index=%@]'.fmt(i)).find('td[data-index=%@]'.fmt(j)).first();
+                    if (!owner._validateAndSet(value, dataCell)) pasteFailed(value);
+                });
+                return;
+            }
 
             var rows = selectedCell.parent().add(selectedCell.parent().nextAll());
             value.split('\n').forEach(function(line, i) {
@@ -108,24 +118,36 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
           TableView or spreadsheet.
         */
         valueForCopy: function() {
+            var value = [];
+            var row;
+            this._forEachSelectedCell(function(i, j, cell, newLine) {
+                if (newLine) {
+                    if (!Ember.isEmpty(row)) value.push(row.join('\t'));
+                    row = [];
+                }
+                row.push(cell.editableValue());
+            });
+            if (!Ember.isEmpty(row)) value.push(row.join('\t'));
+            return value.join('\n');
+        },
+
+        _forEachSelectedCell: function(callback) {
             var owner = this.get('owner');
-            var selectedCell = this.get('owner.selectedCell');
-            var selectionEnd = this.get('owner.selectionEnd');
+            var selectedCell = owner.get('selectedCell');
+            var selectionEnd = owner.get('selectionEnd');
             var minRow = Math.min(owner.rowIndex(selectedCell), owner.rowIndex(selectionEnd));
             var maxRow = Math.max(owner.rowIndex(selectedCell), owner.rowIndex(selectionEnd));
             var minCol = Math.min(owner.columnIndex(selectedCell), owner.columnIndex(selectionEnd));
             var maxCol = Math.max(owner.columnIndex(selectedCell), owner.columnIndex(selectionEnd));
 
-            var value = [];
             var data = owner.get('data');
             for (var i = minRow; i <= maxRow; i++) {
-                var row = [];
+                var newLine = true;
                 for (var j = minCol; j <= maxCol; j++) {
-                    row.push(data[i][j].editableValue());
+                    callback(i, j, data[i][j], newLine);
+                    newLine = false;
                 }
-                value.push(row.join('\t'));
             }
-            return value.join('\n');
         },
 
         mouseDown: function(event) {
