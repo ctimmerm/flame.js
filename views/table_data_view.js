@@ -771,12 +771,10 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
 
         var classes = 'flame-table';
         if (!this.get('parentView.allowSelection')) classes += ' is-selectable';
-        buffer.begin('table').attr('class', classes).attr('width', '1px');
-        buffer.pushOpeningTag();
-        var i, j;
-        for (i = 0; i < rowCount; i++) {
+        buffer.push('<table class="%@" width="1px">'.fmt(classes));
+        for (var i = 0; i < rowCount; i++) {
             buffer.push('<tr data-index="'+i+'">');
-            for (j = 0; j < columnCount; j++) {
+            for (var j = 0; j < columnCount; j++) {
                 var content;
                 var cell = data[i][j];
                 var cssClassesString = '';
@@ -803,7 +801,7 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
             }
             buffer.push('</tr>');
         }
-        buffer.pushClosingTag(); // table
+        buffer.push('</table>');
 
         // Selection indicator
         buffer.push('<div class="table-selection"></div>');
@@ -851,7 +849,7 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
     manipulateCells: function(cellRefs, callback, updateCounter) {
         var data = this.get('data');
         if (!cellRefs || cellRefs.length === 0 || !this.$()) return;
-        var table = this.$('table.flame-table');
+        var table = this.$('.flame-table');
 
         var allCells = table.find('td');
         // Everyone expects that the cellRefs array is empty when we return from this function. We still need the
@@ -887,9 +885,8 @@ Flame.TableDataView = Flame.View.extend(Flame.Statechart, {
         if (i < len) {
             // We've still got some updating to do so let's do it in the next run loop. Thus we should not get any slow
             // script errors but that doesn't mean that the interface is responsive at any degree.
-            var self = this;
-            Ember.run.next(function() {
-                self._batchUpdate(maxUpdates, i, updateCounter, cellRefs, data, allCells, callback);
+            Ember.run.next(this, function() {
+                this._batchUpdate(maxUpdates, i, updateCounter, cellRefs, data, allCells, callback);
             });
         }
     }

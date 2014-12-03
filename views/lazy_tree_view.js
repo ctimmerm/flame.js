@@ -25,7 +25,7 @@ Flame.LazyTreeView = Flame.LazyListView.extend({
 
     init: function() {
         this._invalidateRowCache();
-        this._expandedItems = Ember.Set.create();
+        this._expandedItems = Flame._Set.create();
         // Call the super-constructor last as Flame.ListView constructor calls #_selectionDidChange() which causes
         // calls to #_setIsSelectedStatus() that calls #rowForItem() which expects the caches to be set up.
         this._super();

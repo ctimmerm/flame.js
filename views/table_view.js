@@ -149,7 +149,7 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
             if (clickDelegate) {
                 var target = jQuery(event.target);
                 var header;
-                if (!!target.closest('.column-header').length) {
+                if (target.closest('.column-header').length) {
                     if (clickDelegate.columnHeaderClicked) {
                         // Find the corresponding TableHeader instance for the clicked cell.
                         var level = parseInt(target.closest('tr').attr('class').match(/level\-(\d+)/)[1], 10);
@@ -158,7 +158,7 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
                         clickDelegate.columnHeaderClicked(header, target);
                     }
                     return true;
-                } else if (!!target.closest('.row-header').length) {
+                } else if (target.closest('.row-header').length) {
                     if (clickDelegate.rowHeaderClicked) {
                         var cell = target.closest('td');
                         var index = parseInt(cell.attr('data-index'), 10);
@@ -383,10 +383,8 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
         }
         var length = headers.length;
 
-        buffer.begin('div').addClass('%@-header'.fmt(type)).attr('style', 'position: absolute; %@: %@px'.fmt(position, offset));
-        buffer.pushOpeningTag();
-        buffer.begin('table').attr('style', 'position: absolute').attr('width', '1px');
-        buffer.pushOpeningTag();
+        buffer.push('<div class="%@-header" style="position: absolute; %@: %@px">'.fmt(type, position, offset));
+        buffer.push('<table style="position: absolute" width="1px">');
 
         buffer.push('<colgroup>');
         if (type === 'row') {
@@ -413,8 +411,8 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
             buffer.push('</tr>');
         }
 
-        buffer.pushClosingTag(); // table
-        buffer.pushClosingTag(); // div
+        buffer.push('</table>');
+        buffer.push('</div>');
     },
 
     _renderRow: function(buffer, row, type, rowIndex) {
@@ -435,27 +433,27 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
 
         for (var i = 0; i < length; i++) {
             var header = row[i];
-            buffer.begin('td');
+            var td = new Flame.Element('td');
 
             headerLabel = header.get ? header.get('headerLabel') : header.label;
-            if (!headerLabel) headerLabel = "";
+            if (!headerLabel) headerLabel = '';
 
-            buffer.attr('title', headerLabel.replace(/<br>/g, '\n'));
+            td.attr('title', headerLabel.replace(/<br>/g, '\n'));
 
             if (header.rowspan > 1) {
-                buffer.attr('rowspan', header.rowspan);
+                td.attr('rowspan', header.rowspan);
             }
             if (header.colspan > 1) {
-                buffer.attr('colspan', header.colspan);
+                td.attr('colspan', header.colspan);
             }
 
             label = '<div class="label">%@</div>';
-            var resizeHandle = "";
-            buffer.attr('class', (i % 2 === 0 ? "even-col" : "odd-col"));
+            var resizeHandle = '';
+            td.attr('class', (i % 2 === 0 ? 'even-col' : 'odd-col'));
             if (type === 'column' && !header.hasOwnProperty('children')) { // Leaf node
-                buffer.attr('data-index', i);
+                td.attr('data-index', i);
                 // Mark the leafIndex, so when sorting it's trivial to find the correct field to sort by
-                buffer.attr('data-leaf-index', header.leafIndex);
+                td.attr('data-leaf-index', header.leafIndex);
                 if (this.get('isResizable') && this.get('renderColumnHeader')) {
                     resizeHandle = '<div class="resize-handle">&nbsp;</div>';
                 }
@@ -468,7 +466,7 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
                 var sortClass = sortDirection ? 'sort-%@'.fmt(sortDirection) : '';
                 label = '<div class="label ' + sortClass +'">%@</div>';
             } else if (type === 'row') {
-                buffer.attr('data-index', header.dataIndex);
+                td.attr('data-index', header.dataIndex);
                 if (this.get('renderColumnHeader')) {
                     if (this.get("isResizable")) {
                         if (header.hasOwnProperty('children')) {
@@ -486,12 +484,11 @@ Flame.TableView = Flame.View.extend(Flame.Statechart, {
                 }
             }
 
-            buffer.pushOpeningTag(); // td
-            buffer.push('<div class="content-container">');
-            buffer.push(resizeHandle);
-            buffer.push(label.fmt(headerLabel));
-            buffer.push('</div>');
-            buffer.pushClosingTag(); // td
+            td.push('<div class="content-container">');
+            td.push(resizeHandle);
+            td.push(label.fmt(headerLabel));
+            td.push('</div>');
+            buffer.push(td.string());
         }
     }
 });
