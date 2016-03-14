@@ -1,6 +1,7 @@
-//= require ./label_view
+import Flame from '../flame';
+import LabelView from './label_view';
 
-Flame.ErrorMessageView = Flame.LabelView.extend({
+export default LabelView.extend({
     classNames: ['flame-form-view-validation-error'],
     classNameBindings: ['pointToClass', 'skinny'],
     skinny: false,

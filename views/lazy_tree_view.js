@@ -1,5 +1,5 @@
-//= require ./lazy_list_view
-//= require ./lazy_tree_item_view
+import LazyListView from './lazy_list_view';
+import LazyTreeItemView from './lazy_tree_item_view';
 
 /**
   The tree in the `LazyTreeView` is being rendered as a flat list, with items
@@ -10,9 +10,9 @@
   @class LazyTreeView
   @extends LazyListView
 */
-Flame.LazyTreeView = Flame.LazyListView.extend({
+export default LazyListView.extend({
     classNames: ['flame-tree-view', 'flame-lazy-tree-view'],
-    itemViewClass: Flame.LazyTreeItemView,
+    itemViewClass: LazyTreeItemView,
     _rowToItemCache: null,
     _itemToRowCache: null,
     _itemToLevelCache: null,

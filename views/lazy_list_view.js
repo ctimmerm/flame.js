@@ -1,4 +1,5 @@
-//= require ./list_view
+import ListView from './list_view';
+import ScrollView from './scroll_view';
 
 /**
   Flame.ListView has the problem that it creates and renders a view for each and
@@ -23,7 +24,7 @@
   @class LazyListView
   @extends ListView
 */
-Flame.LazyListView = Flame.ListView.extend({
+export default ListView.extend({
     classNames: ['flame-lazy-list-view'],
     /** The default height of one row in the LazyListView */
     itemHeight: 25,
@@ -80,7 +81,7 @@ Flame.LazyListView = Flame.ListView.extend({
     },
 
     _updateScrollPosition: function() {
-        var scrollView = this.nearestOfType(Flame.ScrollView);
+        var scrollView = this.nearestOfType(ScrollView);
         if (scrollView && scrollView.get('element')) {
             var element = scrollView.get('element');
             this._lastScrollHeight = element.offsetHeight;

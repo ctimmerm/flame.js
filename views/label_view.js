@@ -1,4 +1,7 @@
-Flame.LabelView = Flame.View.extend(Flame.ActionSupport, {
+import View from '../view';
+import ActionSupport from '../mixins/action_support';
+
+const LabelView = View.extend(ActionSupport, {
     layout: { left: 0, top: 0 },
     classNames: ['flame-label-view'],
     classNameBindings: ['textAlign', 'isSelectable', 'isDisabled'],
@@ -44,12 +47,14 @@ Flame.LabelView = Flame.View.extend(Flame.ActionSupport, {
     }
 });
 
-Flame.LabelView.reopenClass({
+LabelView.reopenClass({
     // Shortcut for creating label views with a static label
     label: function(value, left, top, width, height) {
-        return Flame.LabelView.extend({
+        return LabelView.extend({
             layout: { left: left, top: top, width: width, height: height },
             value: value
         });
     }
 });
+
+export default LabelView;

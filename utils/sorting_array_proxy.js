@@ -28,7 +28,7 @@
   sorting obviously changes the item indexes, and rewriting all operations and observers on the fly
   sounds like too difficult to implement.)
 */
-Flame.SortingArrayProxy = Ember.ArrayProxy.extend({
+export default Ember.ArrayProxy.extend({
     sortKey: 'position',
     parent: null,
     _suppressObservers: false,
@@ -269,5 +269,4 @@ Flame.SortingArrayProxy = Ember.ArrayProxy.extend({
             this._suppressObservers = false;
         }
     }
-
 });

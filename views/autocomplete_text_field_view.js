@@ -1,12 +1,13 @@
-//= require ./text_field_view
+import TextFieldView, { TextField } from './text_field_view';
+import Statechart, { State } from '../statechart';
 
-Flame.AutocompleteTextFieldView = Flame.TextFieldView.extend(Flame.Statechart, Flame.ActionSupport, {
+export default TextFieldView.extend(Statechart, {
     _autocompleteView: null,
     _lastQueuedQuery: null,
     autocompleteDelegate: null,
     initialFlameState: 'idle',
 
-    textField: Flame.TextField.extend({
+    textField: TextField.extend({
         _debounce: null,
 
         keyUp: function(event) {
@@ -29,7 +30,7 @@ Flame.AutocompleteTextFieldView = Flame.TextFieldView.extend(Flame.Statechart, F
         }
     }),
 
-    idle: Flame.State.extend({
+    idle: State.extend({
         enterState: function() {
             var lastQuery = this.get('owner._lastQueuedQuery');
             if (lastQuery) {
@@ -49,7 +50,7 @@ Flame.AutocompleteTextFieldView = Flame.TextFieldView.extend(Flame.Statechart, F
         }
     }),
 
-    requesting: Flame.State.extend({
+    requesting: State.extend({
         enterState: function() {
             this.get('owner')._closeAutocompleteMenu();
         },

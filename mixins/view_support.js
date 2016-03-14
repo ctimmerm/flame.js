@@ -1,4 +1,7 @@
-Flame.ViewSupport = {
+import View from '../view';
+import { bindPrefixedBindings } from '../utils/prefixed_binding';
+
+export default Ember.Mixin.create({
     concatenatedProperties: ['displayProperties'],
     displayProperties: [],
     resetClassNames: false,
@@ -35,7 +38,7 @@ Flame.ViewSupport = {
 
     createChildView: function(view, attrs) {
         view = this._super(view, attrs);
-        if (view instanceof Ember.View && Flame._bindPrefixedBindings(view)) {
+        if (view instanceof Ember.View && bindPrefixedBindings(view)) {
             Ember.finishChains(view);
         }
         return view;
@@ -49,14 +52,14 @@ Flame.ViewSupport = {
     _collectSuperClassNames: function() {
         var superClassNames = [];
         var superClass = Object.getPrototypeOf(Object.getPrototypeOf(this));
-        while (superClass && superClass.constructor !== Flame.View) {
+        while (superClass && superClass.constructor !== View) {
             superClassNames.pushObjects(superClass.classNames || []);
             superClass = Object.getPrototypeOf(superClass);
         }
         // Add back the classNames from Flame.View and deeper
-        if (superClass.constructor === Flame.View) {
+        if (superClass.constructor === View) {
             superClassNames.removeObjects(superClass.classNames);
         }
         return superClassNames;
     }
-};
+});

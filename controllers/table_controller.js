@@ -9,7 +9,7 @@ var readOnly = Ember.computed.readOnly;
   There are two refined subclasses of this controller, DataTableController and
   ArrayTableController, which you may find easier to use for simple tables.
 */
-Flame.TableController = Ember.Object.extend({
+export default Ember.Object.extend({
     dirtyCells: [],
     valuesOn: 'column',
     isLoading: false,

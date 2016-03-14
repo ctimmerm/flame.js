@@ -1,9 +1,5 @@
-//= require_self
-//= require_tree ./utils
-//= require ./statechart
-//= require_tree ./controllers
-//= require ./view
-//= require ./validations
-//= require ./version
-
-window.Flame = Ember.Namespace.create();
+export default {
+    ALIGN_LEFT: 'align-left',
+    ALIGN_RIGHT: 'align-right',
+    ALIGN_CENTER: 'align-center'
+};
